@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int    @id @default(autoincrement())
+  email     String @unique
+  password  String
+  firstName String
+  lastName  String
+  role      String
+
+  items          Item[]
+  customers      Customer[]
+  expenses       Expenses[]
+  invoices       Invoice[]
+  payments       Payment[]
+  categories     Category[]
+  Project        Project[]
+  BudgetProposal BudgetProposal[]
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  type        String
+  name        String
+  unit        String
+  description String
+  price       Float
+
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  invoiceItems InvoiceItem[]
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  type        String
+  firstName   String
+  lastName    String
+  companyName String
+  email       String
+  phoneNumber String
+  country     String
+  city        String
+  state       String
+  zipCode     Int
+
+  userId   Int
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  invoices Invoice[]
+  payments Payment[]
+  Project  Project[]
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  categoryName String
+
+  expense Expenses[]
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Expenses {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  transactionDate DateTime
+  amount          Int
+  modeOfPayment   String
+  referenceNumber String   @unique
+
+  categoryId Int
+  categories Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Invoice {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  invoiceNumber String
+  dueDate       String
+  total         Float
+  status        String   @default("pending")
+  balanceDue    Int
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  items InvoiceItem[]
+
+  paymentItems PaymentItem[]
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  dateOfPayment   String
+  paymentNumber   String
+  modeOfPayment   String
+  referenceNumber String
+  totalAmount     Float
+
+  customerId Int
+  customers  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  paymentItems PaymentItem[]
+}
+
+model InvoiceItem {
+  id       Int   @id @default(autoincrement())
+  quantity Int
+  price    Float
+  amount   Float
+
+  itemId Int
+  item   Item @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model PaymentItem {
+  id     Int   @id @default(autoincrement())
+  amount Float
+
+  paymentId Int
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Project {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  projectName   String
+  projectCode   String
+  billingMethod String
+  description   String
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  projectUsers ProjectUser[]
+  ProjectTasks ProjectTask[]
+}
+
+model ProjectUser {
+  id        Int    @id @default(autoincrement())
+  userName  String
+  userEmail String
+
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model ProjectTask {
+  id              Int    @id @default(autoincrement())
+  taskName        String
+  taskDescription String
+
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model BudgetProposal {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  proposalTitle  String
+  proposalNumber String
+  totalBudget    Int
+  budgetPeriod   String
+  startDate      DateTime
+  endDate        DateTime
+  justification  String
+  potentialRisk  String
+  strategy       String
+  alternative    String
+  status         String   @default("Pending")
+  ceoComment     String? 
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  budgetBreakdown BudgetBreakdown[]
+}
+
+model BudgetBreakdown {
+  id               Int    @id @default(autoincrement())
+  proposalCategory String
+  allocatedAmount  Int
+  description      String
+
+  budgetProposalId Int
+  budgetProposal   BudgetProposal @relation(fields: [budgetProposalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
